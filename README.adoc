@@ -55,6 +55,32 @@ ____
 sudo apt install python3-pip python3-venv libdb-dev python3-dev build-essential universal-ctags perl git apache2 libapache2-mod-wsgi-py3 libjansson4
 ----
 
+== Automated Local Setup
+
+On Debian or Ubuntu, `utils/setup-local` prepares one project and configures
+Apache without manually editing `000-default.conf`. Set only the parent
+directory used for Elixir projects, then provide the project name and its
+source Git repository:
+
+----
+export LXR_PROJ_DIR=$HOME/self_project/elixir-workspace
+./utils/setup-local riot $HOME/self_project/RIOT
+----
+
+The installer uses `/usr/local/elixir` as the Elixir installation and
+`$HOME/venv` as the Python virtual environment by default. Override these
+locations when needed:
+
+----
+ELIXIR_HOME=/path/to/elixir ELIXIR_VENV=/path/to/venv \
+    ./utils/setup-local <project> <source-repository>
+----
+
+It creates `<LXR_PROJ_DIR>/<project>/repo` and `data`, installs the Python
+requirements, indexes the repository, generates an Apache virtual host,
+enables the required modules, and restarts Apache. Pass `--skip-index` when
+configuring Apache for a project that has already been indexed.
+
 == Download Elixir Project
 
 ----
