@@ -85,7 +85,9 @@ When developing in a separate checkout while Apache uses
 `/usr/local/elixir`, deploy changes to `script.sh` and restart Apache:
 
 ----
-sudo install -m 755 $HOME/self_project/elixir/script.sh /usr/local/elixir/script.sh
+elixir_source=$(git rev-parse --show-toplevel)
+elixir_home=${ELIXIR_HOME:-/usr/local/elixir}
+sudo install -m 755 "$elixir_source/script.sh" "$elixir_home/script.sh"
 sudo systemctl restart apache2
 ----
 
