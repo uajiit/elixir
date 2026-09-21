@@ -81,6 +81,17 @@ requirements, indexes the repository, generates an Apache virtual host,
 enables the required modules, and restarts Apache. Pass `--skip-index` when
 configuring Apache for a project that has already been indexed.
 
+When developing in a separate checkout while Apache uses
+`/usr/local/elixir`, deploy changes to `script.sh` and restart Apache:
+
+----
+sudo install -m 755 $HOME/self_project/elixir/script.sh /usr/local/elixir/script.sh
+sudo systemctl restart apache2
+----
+
+This deployment step is unnecessary when the development checkout itself is
+the configured `ELIXIR_HOME`.
+
 == Download Elixir Project
 
 ----
