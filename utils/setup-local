@@ -150,10 +150,6 @@ sudo install -o root -g root -m 0644 \
 sudo a2enmod rewrite wsgi
 sudo a2dissite 000-default >/dev/null 2>&1 || true
 sudo a2ensite elixir
-if ! sudo git config --system --get-all safe.directory |
-        grep -Fxq "$repo_dir"; then
-    sudo git config --system --add safe.directory "$repo_dir"
-fi
 if [[ -f $data_dir/versions.db ]]; then
     sudo -u "$apache_user" test -r "$data_dir/versions.db" || {
         echo "$apache_user cannot read the generated index in $data_dir" >&2
