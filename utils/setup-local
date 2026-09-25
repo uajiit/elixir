@@ -40,6 +40,12 @@ project_dir=$LXR_PROJ_DIR/$project
 repo_dir=$project_dir/repo
 data_dir=$project_dir/data
 
+if [[ $skip_index -eq 1 && ! -s $data_dir/versions.db ]]; then
+    echo "No existing index found for $project in $data_dir" >&2
+    echo "Run setup-local without --skip-index first." >&2
+    exit 1
+fi
+
 if [[ ! $project =~ ^[A-Za-z0-9_.-]+$ ]]; then
     echo "Invalid project name: $project" >&2
     exit 2
@@ -62,6 +68,12 @@ if ! git -C "$source_repo" rev-parse --git-dir >/dev/null 2>&1; then
     exit 1
 fi
 
+if ! git -C "$source_repo" tag --list | grep -q .; then
+    echo "Source repository has no tags: $source_repo" >&2
+    echo "Elixir requires at least one tagged version before indexing." >&2
+    exit 1
+fi
+
 if [[ ! -f $elixir_home/wsgi.py || ! -f $elixir_home/update.py ]]; then
     echo "ELIXIR_HOME is not an Elixir installation: $elixir_home" >&2
     exit 1
@@ -73,6 +85,9 @@ for command in git python3 sudo systemctl apache2ctl a2enmod a2ensite a2dissite;
         exit 1
     fi
 done
+
+# Ask for sudo before dependency installation or potentially long indexing.
+sudo -v
 
 if [[ ! -x $elixir_venv/bin/python3 ]]; then
     python3 -m venv "$elixir_venv"
@@ -91,6 +106,15 @@ elif ! git -C "$repo_dir" rev-parse --is-bare-repository 2>/dev/null |
     echo "Existing repository is not bare: $repo_dir" >&2
     exit 1
 fi
+
+if git -C "$repo_dir" remote get-url origin >/dev/null 2>&1; then
+    git -C "$repo_dir" remote set-url origin "$source_repo"
+else
+    git -C "$repo_dir" remote add origin "$source_repo"
+fi
+git -C "$repo_dir" fetch --prune origin \
+    '+refs/heads/*:refs/heads/*' \
+    '+refs/tags/*:refs/tags/*'
 
 if [[ $skip_index -eq 0 ]]; then
     env \
@@ -112,6 +136,8 @@ apache_config=$(mktemp)
 trap 'rm -f "$apache_config"' EXIT
 
 cat >"$apache_config" <<EOF
+ServerName localhost
+
 <Directory "$elixir_home/">
     AllowOverride None
     Require all denied
@@ -125,7 +151,6 @@ cat >"$apache_config" <<EOF
 </Directory>
 
 <VirtualHost *:80>
-    ServerName localhost
     DocumentRoot "$elixir_home/"
 
     SetEnv LXR_PROJ_DIR "$LXR_PROJ_DIR"
