@@ -60,13 +60,18 @@ before setup:
 git -C /path/to/source tag --list
 ----
 
-From the default Elixir installation, choose the parent directory for indexed
-projects and run the installer:
+From the default Elixir installation, run the installer:
 
 ----
 cd /usr/local/elixir
-export LXR_PROJ_DIR=$HOME/elixir-workspace
 ./utils/setup-local <project> /path/to/source
+----
+
+`LXR_PROJ_DIR` defaults to the value in an existing generated Apache site, or
+to `$HOME/elixir-workspace` on the first run. Override it when needed:
+
+----
+export LXR_PROJ_DIR=/path/to/elixir-workspace
 ----
 
 For example:

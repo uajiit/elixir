@@ -7,7 +7,8 @@ usage() {
 Usage: LXR_PROJ_DIR=<projects-dir> setup-local [--skip-index] <project> <source-repository>
 
 Environment:
-  LXR_PROJ_DIR   Parent directory containing all indexed projects (required)
+  LXR_PROJ_DIR   Parent directory containing all indexed projects
+                 (default: existing Apache setting or $HOME/elixir-workspace)
   ELIXIR_HOME    Installed Elixir source directory (default: /usr/local/elixir)
   ELIXIR_VENV    Python virtual environment (default: $HOME/venv)
   APACHE_USER    Apache runtime user (default: www-data)
@@ -26,10 +27,23 @@ if [[ ${1:-} == "--skip-index" ]]; then
     shift
 fi
 
-if [[ $# -ne 2 ]] || [[ -z ${LXR_PROJ_DIR:-} ]]; then
+if [[ $# -ne 2 ]]; then
     usage >&2
     exit 2
 fi
+
+if [[ -z ${LXR_PROJ_DIR:-} &&
+      -r /etc/apache2/sites-available/elixir.conf ]]; then
+    while read -r directive name value _rest; do
+        if [[ $directive == SetEnv && $name == LXR_PROJ_DIR ]]; then
+            LXR_PROJ_DIR=${value#\"}
+            LXR_PROJ_DIR=${LXR_PROJ_DIR%\"}
+            break
+        fi
+    done < /etc/apache2/sites-available/elixir.conf
+fi
+LXR_PROJ_DIR=${LXR_PROJ_DIR:-"$HOME/elixir-workspace"}
+export LXR_PROJ_DIR
 
 project=$1
 source_repo=$2
